@@ -73,7 +73,6 @@
   letter-spacing: 0.08em;
 }
 
-.form-row select,
 .form-row input[type="text"],
 .form-row .goal-date-input {
   padding: 0.75rem 1rem;
@@ -86,23 +85,108 @@
   transition: all var(--transition-fast);
 }
 
-.form-row select:hover,
 .form-row input[type="text"]:hover,
 .form-row .goal-date-input:hover {
   border-color: rgba(139, 156, 179, 0.3);
 }
 
 .form-row input[type="text"]:focus,
-.form-row .goal-date-input:focus,
-.form-row select:focus {
+.form-row .goal-date-input:focus {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-/* Goal date picker popover */
+/* Radix Select */
+.form-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-elevated);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.form-select-trigger:hover {
+  border-color: rgba(139, 156, 179, 0.3);
+}
+
+.form-select-trigger:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.form-select-trigger[data-placeholder] {
+  color: var(--color-text-muted);
+}
+
+.form-select-icon {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform var(--transition-fast);
+}
+
+.form-select-trigger[data-state="open"] .form-select-icon {
+  transform: rotate(180deg);
+}
+
+.form-select-content {
+  width: var(--radix-select-trigger-width);
+  max-height: var(--radix-select-content-available-height);
+  overflow: hidden;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+}
+
+.form-select-viewport {
+  padding: 0.25rem;
+}
+
+.form-select-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  outline: none;
+  transition: background var(--transition-fast);
+}
+
+.form-select-item:hover,
+.form-select-item[data-highlighted] {
+  background: rgba(139, 156, 179, 0.15);
+}
+
+.form-select-item[data-state="checked"] {
+  background: var(--accent-glow);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Goal date picker */
 .goal-date-picker {
   position: relative;
+  width: 100%;
+}
+
+.goal-date-input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .goal-date-popover {

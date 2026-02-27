@@ -2,12 +2,33 @@ import { useState, useCallback } from 'react';
 import type { PlanInputs, WeekPlan, RaceDistance, ExperienceLevel, LongRunDay } from './types';
 import { generatePlan } from './lib/generatePlan';
 import { GoalDatePicker } from './components/GoalDatePicker';
+import { FormSelect } from './components/FormSelect';
 import './App.css';
 
-const RACE_DISTANCES: RaceDistance[] = ['5K', '10K', 'Half', 'Marathon'];
-const EXPERIENCE_LEVELS: ExperienceLevel[] = ['Beginner', 'Intermediate', 'Advanced'];
-const RUNS_PER_WEEK_OPTIONS = [3, 4, 5, 6] as const;
-const LONG_RUN_DAYS: LongRunDay[] = ['Saturday', 'Sunday'];
+const RACE_DISTANCE_OPTIONS = [
+  { value: '5K', label: '5K' },
+  { value: '10K', label: '10K' },
+  { value: 'Half', label: 'Half' },
+  { value: 'Marathon', label: 'Marathon' },
+] as const;
+
+const EXPERIENCE_LEVEL_OPTIONS = [
+  { value: 'Beginner', label: 'Beginner' },
+  { value: 'Intermediate', label: 'Intermediate' },
+  { value: 'Advanced', label: 'Advanced' },
+] as const;
+
+const RUNS_PER_WEEK_OPTIONS = [
+  { value: '3', label: '3' },
+  { value: '4', label: '4' },
+  { value: '5', label: '5' },
+  { value: '6', label: '6' },
+] as const;
+
+const LONG_RUN_DAY_OPTIONS = [
+  { value: 'Saturday', label: 'Saturday' },
+  { value: 'Sunday', label: 'Sunday' },
+] as const;
 
 const DEFAULT_INPUTS: PlanInputs = {
   raceDistance: '5K',
@@ -78,17 +99,12 @@ function App() {
       <form onSubmit={handleSubmit} className="form">
         <div className="form-row">
           <label htmlFor="raceDistance">Race distance</label>
-          <select
+          <FormSelect
             id="raceDistance"
             value={inputs.raceDistance}
-            onChange={(e) => handleInputChange('raceDistance', e.target.value as RaceDistance)}
-          >
-            {RACE_DISTANCES.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => handleInputChange('raceDistance', v as RaceDistance)}
+            options={[...RACE_DISTANCE_OPTIONS]}
+          />
         </div>
 
         <div className="form-row">
@@ -109,49 +125,32 @@ function App() {
 
         <div className="form-row">
           <label htmlFor="experienceLevel">Experience level</label>
-          <select
+          <FormSelect
             id="experienceLevel"
             value={inputs.experienceLevel}
-            onChange={(e) =>
-              handleInputChange('experienceLevel', e.target.value as ExperienceLevel)
-            }
-          >
-            {EXPERIENCE_LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => handleInputChange('experienceLevel', v as ExperienceLevel)}
+            options={[...EXPERIENCE_LEVEL_OPTIONS]}
+          />
         </div>
 
         <div className="form-row">
           <label htmlFor="runsPerWeek">Runs per week</label>
-          <select
+          <FormSelect
             id="runsPerWeek"
-            value={inputs.runsPerWeek}
-            onChange={(e) => handleInputChange('runsPerWeek', Number(e.target.value))}
-          >
-            {RUNS_PER_WEEK_OPTIONS.map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
+            value={String(inputs.runsPerWeek)}
+            onValueChange={(v) => handleInputChange('runsPerWeek', Number(v))}
+            options={[...RUNS_PER_WEEK_OPTIONS]}
+          />
         </div>
 
         <div className="form-row">
           <label htmlFor="longRunDay">Long run day</label>
-          <select
+          <FormSelect
             id="longRunDay"
             value={inputs.longRunDay}
-            onChange={(e) => handleInputChange('longRunDay', e.target.value as LongRunDay)}
-          >
-            {LONG_RUN_DAYS.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
+            onValueChange={(v) => handleInputChange('longRunDay', v as LongRunDay)}
+            options={[...LONG_RUN_DAY_OPTIONS]}
+          />
         </div>
 
         <div className="form-actions">

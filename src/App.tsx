@@ -71,6 +71,7 @@ function App() {
       <header className="header">
         <h1>PacePal</h1>
         <p className="tagline">Running training plan generator</p>
+        <div className="header-accent" aria-hidden />
       </header>
 
       <form onSubmit={handleSubmit} className="form">
@@ -162,13 +163,15 @@ function App() {
 
       {loading && (
         <div className="loading" role="status" aria-live="polite">
-          Generating your plan…
+          <div className="loading-spinner" aria-hidden />
+          <span>Generating your plan…</span>
         </div>
       )}
 
       {!loading && plan === null && (
         <div className="empty-state">
-          Fill the form to generate your plan.
+          <div className="empty-state-icon" aria-hidden>🏃</div>
+          <p>Fill the form above to generate your personalized training plan.</p>
         </div>
       )}
 
@@ -205,9 +208,14 @@ function App() {
               <tbody>
                 {plan.map((week) => (
                   <tr key={week.weekNumber}>
-                    <td>{week.weekNumber}</td>
+                    <td className="week-cell">{week.weekNumber}</td>
                     {week.days.map((day) => (
-                      <td key={day.weekday}>
+                      <td
+                        key={day.weekday}
+                        className={
+                          day.workoutType === 'Rest' ? 'rest-cell' : 'workout-cell'
+                        }
+                      >
                         {day.workoutType === 'Rest'
                           ? 'Rest'
                           : `${day.workoutType} ${day.distanceKm} km`}

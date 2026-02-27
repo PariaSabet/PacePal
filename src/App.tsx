@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { PlanInputs, WeekPlan, RaceDistance, ExperienceLevel, LongRunDay } from './types';
 import { generatePlan } from './lib/generatePlan';
+import { GoalDatePicker } from './components/GoalDatePicker';
 import './App.css';
 
 const RACE_DISTANCES: RaceDistance[] = ['5K', '10K', 'Half', 'Marathon'];
@@ -92,13 +93,12 @@ function App() {
 
         <div className="form-row">
           <label htmlFor="goalDate">Goal date</label>
-          <input
+          <GoalDatePicker
             id="goalDate"
-            type="date"
             value={inputs.goalDate}
-            onChange={(e) => handleInputChange('goalDate', e.target.value)}
-            aria-invalid={!!dateError}
-            aria-describedby={dateError ? 'goalDateError' : undefined}
+            onChange={(value) => handleInputChange('goalDate', value)}
+            ariaInvalid={!!dateError}
+            ariaDescribedBy={dateError ? 'goalDateError' : undefined}
           />
           {dateError && (
             <span id="goalDateError" className="form-error" role="alert">

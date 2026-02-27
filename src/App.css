@@ -74,7 +74,8 @@
 }
 
 .form-row select,
-.form-row input[type="date"] {
+.form-row input[type="text"],
+.form-row .goal-date-input {
   padding: 0.75rem 1rem;
   font-size: 1rem;
   font-family: inherit;
@@ -86,20 +87,56 @@
 }
 
 .form-row select:hover,
-.form-row input[type="date"]:hover {
+.form-row input[type="text"]:hover,
+.form-row .goal-date-input:hover {
   border-color: rgba(139, 156, 179, 0.3);
 }
 
-.form-row input[type="date"]:focus,
+.form-row input[type="text"]:focus,
+.form-row .goal-date-input:focus,
 .form-row select:focus {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.form-row input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  cursor: pointer;
+/* Goal date picker popover */
+.goal-date-picker {
+  position: relative;
+}
+
+.goal-date-popover {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 50;
+  padding: 1rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.goal-date-popover .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: var(--accent-glow);
+  --rdp-today-color: var(--accent);
+  --rdp-day_button-border-radius: var(--radius-md);
+  --rdp-outside-opacity: 0.4;
+  --rdp-disabled-opacity: 0.35;
+}
+
+.goal-date-popover {
+  color: var(--color-text);
+}
+
+.goal-date-popover .rdp-day_button:hover:not([disabled]) {
+  background: rgba(139, 156, 179, 0.15);
+}
+
+.goal-date-popover .rdp-button_next:hover:not(:disabled),
+.goal-date-popover .rdp-button_previous:hover:not(:disabled) {
+  color: var(--accent);
 }
 
 .form-error {

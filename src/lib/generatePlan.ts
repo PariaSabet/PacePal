@@ -66,10 +66,16 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
 
   const maxLongKm = MAX_LONG_RUN_KM_BY_RACE[inputs.raceDistance];
   const maxRunKm = MAX_RUN_KM_BY_RACE[inputs.raceDistance];
+  const easyCount = template.filter((t) => t === 'Easy').length;
+  const feasibleMax =
+    maxLongKm + maxRunKm + easyCount * maxRunKm;
 
   for (let w = 0; w < numWeeks; w++) {
     const isCutback = (w + 1) % CUTBACK_EVERY_N_WEEKS === 0;
-    const weekTotal = isCutback ? weeklyKm * CUTBACK_MULTIPLIER : weeklyKm;
+    let weekTotal = isCutback ? weeklyKm * CUTBACK_MULTIPLIER : weeklyKm;
+    if (weekTotal > feasibleMax) {
+      weekTotal = feasibleMax;
+    }
     const distributed = distributeMileage(template, weekTotal, maxLongKm, maxRunKm, maxRunKm);
 
     const days: DayPlan[] = distributed.map((d, i) => ({
@@ -87,7 +93,7 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
     });
 
     if (!isCutback) {
-      weeklyKm *= 1 + MILEAGE_INCREASE_PCT;
+      weeklyKm = Math.min(weeklyKm * (1 + MILEAGE_INCREASE_PCT), feasibleMax);
     }
   }
 

@@ -1,6 +1,13 @@
 import type { PlanInputs, WeekPlan, DayPlan, WorkoutType } from '../types';
 import { getWeekTemplate, STARTING_MILEAGE_KM, WEEKDAY_SHORT, MAX_RUN_KM_BY_RACE } from '../types';
 
+const MAX_LONG_RUN_KM_BY_RACE = {
+  '5K': 10,
+  '10K': 16,
+  Half: 22,
+  Marathon: 32,
+} as const;
+
 const MILEAGE_INCREASE_PCT = 0.07;
 const CUTBACK_MULTIPLIER = 0.8;
 const CUTBACK_EVERY_N_WEEKS = 4;
@@ -18,19 +25,21 @@ function weeksBetween(start: Date, end: Date): number {
 /**
  * Distribute weekly mileage across run days according to template.
  * Long = 35%, Workout = 25%, remaining to Easy days.
- * No single run exceeds the race distance (e.g. 10K plan → max 10km per run).
+ * Long runs use race-specific caps (e.g. 5K → up to 10km); Easy/Workout stay moderate.
  */
 function distributeMileage(
   template: WorkoutType[],
   totalKm: number,
-  maxRunKm: number
+  maxLongKm: number,
+  maxWorkoutKm: number,
+  maxEasyKm: number
 ): { type: WorkoutType; km: number }[] {
   const easyCount = template.filter((t) => t === 'Easy').length;
 
-  const longKm = Math.min(totalKm * 0.35, maxRunKm);
-  const workoutKm = Math.min(totalKm * 0.25, maxRunKm);
+  const longKm = Math.min(totalKm * 0.35, maxLongKm);
+  const workoutKm = Math.min(totalKm * 0.25, maxWorkoutKm);
   const remainingKm = totalKm - longKm - workoutKm;
-  const easyKmEach = easyCount > 0 ? Math.min(remainingKm / easyCount, maxRunKm) : 0;
+  const easyKmEach = easyCount > 0 ? Math.min(remainingKm / easyCount, maxEasyKm) : 0;
 
   return template.map((type) => {
     if (type === 'Rest') return { type: 'Rest' as const, km: 0 };
@@ -55,11 +64,13 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
 
   const plans: WeekPlan[] = [];
 
+  const maxLongKm = MAX_LONG_RUN_KM_BY_RACE[inputs.raceDistance];
+  const maxRunKm = MAX_RUN_KM_BY_RACE[inputs.raceDistance];
+
   for (let w = 0; w < numWeeks; w++) {
     const isCutback = (w + 1) % CUTBACK_EVERY_N_WEEKS === 0;
     const weekTotal = isCutback ? weeklyKm * CUTBACK_MULTIPLIER : weeklyKm;
-    const maxRunKm = MAX_RUN_KM_BY_RACE[inputs.raceDistance];
-    const distributed = distributeMileage(template, weekTotal, maxRunKm);
+    const distributed = distributeMileage(template, weekTotal, maxLongKm, maxRunKm, maxRunKm);
 
     const days: DayPlan[] = distributed.map((d, i) => ({
       weekday: WEEKDAY_SHORT[i],

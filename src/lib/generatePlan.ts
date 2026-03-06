@@ -72,7 +72,11 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
 
   for (let w = 0; w < numWeeks; w++) {
     const isCutback = (w + 1) % CUTBACK_EVERY_N_WEEKS === 0;
-    let weekTotal = isCutback ? weeklyKm * CUTBACK_MULTIPLIER : weeklyKm;
+    const taperMultiplier =
+      numWeeks >= 6 && w === numWeeks - 2 ? 0.8 :
+      w === numWeeks - 1 ? 0.6 :
+      1;
+    let weekTotal = weeklyKm * (isCutback ? CUTBACK_MULTIPLIER : 1) * taperMultiplier;
     if (weekTotal > feasibleMax) {
       weekTotal = feasibleMax;
     }

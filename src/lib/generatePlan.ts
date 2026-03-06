@@ -11,6 +11,15 @@ const MAX_LONG_RUN_KM_BY_RACE = {
 const MILEAGE_INCREASE_PCT = 0.07;
 const CUTBACK_MULTIPLIER = 0.8;
 const CUTBACK_EVERY_N_WEEKS = 4;
+const MAX_GROWTH_PCT = 0.12; // cap on growth rate to avoid excessive jumps
+
+/** Target peak weekly km by race distance and experience – ensures plan progresses toward goal */
+const TARGET_PEAK_KM: Record<RaceDistance, Record<ExperienceLevel, number>> = {
+  '5K': { Beginner: 35, Intermediate: 45, Advanced: 55 },
+  '10K': { Beginner: 45, Intermediate: 55, Advanced: 70 },
+  Half: { Beginner: 55, Intermediate: 70, Advanced: 85 },
+  Marathon: { Beginner: 65, Intermediate: 80, Advanced: 100 },
+};
 
 function roundToHalf(km: number): number {
   return Math.round(km * 2) / 2;
@@ -95,6 +104,25 @@ function weeksBetween(start: Date, end: Date): number {
 }
 
 /**
+ * Returns the growth rate needed to reach target peak in available build weeks.
+ * Ensures the plan progresses toward the goal even with cutbacks and taper.
+ */
+function getEffectiveGrowthRate(
+  startKm: number,
+  targetPeakKm: number,
+  numWeeks: number,
+  feasibleMax: number
+): number {
+  const taperWeeks = numWeeks >= 6 ? 2 : 1;
+  const cutbackWeeks = Math.floor(numWeeks / CUTBACK_EVERY_N_WEEKS);
+  const buildWeeks = Math.max(1, numWeeks - taperWeeks - cutbackWeeks);
+  const target = Math.min(targetPeakKm, feasibleMax);
+  if (target <= startKm) return MILEAGE_INCREASE_PCT;
+  const required = Math.pow(target / startKm, 1 / buildWeeks) - 1;
+  return Math.min(Math.max(required, MILEAGE_INCREASE_PCT), MAX_GROWTH_PCT);
+}
+
+/**
  * Distribute weekly mileage across run days according to template.
  * Long = 35%, Workout = 25%, remaining to Easy days.
  * Long runs use race-specific caps (e.g. 5K → up to 10km); Easy/Workout stay moderate.
@@ -142,7 +170,22 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
   const feasibleMax =
     maxLongKm + maxRunKm + easyCount * maxRunKm;
 
+  const targetPeak = TARGET_PEAK_KM[inputs.raceDistance][inputs.experienceLevel];
+  const growthRate = getEffectiveGrowthRate(
+    weeklyKm,
+    targetPeak,
+    numWeeks,
+    feasibleMax
+  );
+
   for (let w = 0; w < numWeeks; w++) {
+    // Apply the "missed" increase when emerging from cutback – week after cutback
+    // is higher than the week before cutback (baseline doesn't stagnate)
+    const prevWasCutback = w > 0 && w % CUTBACK_EVERY_N_WEEKS === 0;
+    if (prevWasCutback) {
+      weeklyKm = Math.min(weeklyKm * (1 + growthRate), feasibleMax);
+    }
+
     const isCutback = (w + 1) % CUTBACK_EVERY_N_WEEKS === 0;
     const taperMultiplier =
       numWeeks >= 6 && w === numWeeks - 2 ? 0.8 :
@@ -179,8 +222,9 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
       totalMileageKm: roundToHalf(actualTotal),
     });
 
-    if (!isCutback) {
-      weeklyKm = Math.min(weeklyKm * (1 + MILEAGE_INCREASE_PCT), feasibleMax);
+    // Apply increase for build weeks; skip when we already applied post-cutback bounce
+    if (!isCutback && !prevWasCutback) {
+      weeklyKm = Math.min(weeklyKm * (1 + growthRate), feasibleMax);
     }
   }
 

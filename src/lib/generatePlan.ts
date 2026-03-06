@@ -122,9 +122,17 @@ function getEffectiveGrowthRate(
   return Math.min(Math.max(required, MILEAGE_INCREASE_PCT), MAX_GROWTH_PCT);
 }
 
+/** Long/Workout % by runsPerWeek – more easy days get more total % for easy runs */
+const SPLIT_BY_RUNS: Record<number, { long: number; workout: number }> = {
+  3: { long: 0.4, workout: 0.25 },
+  4: { long: 0.35, workout: 0.25 },
+  5: { long: 0.3, workout: 0.2 },
+  6: { long: 0.25, workout: 0.2 },
+};
+
 /**
  * Distribute weekly mileage across run days according to template.
- * Long = 35%, Workout = 25%, remaining to Easy days.
+ * Long/Workout % vary by runsPerWeek so Easy days don't get spread too thin.
  * Long runs use race-specific caps (e.g. 5K → up to 10km); Easy/Workout stay moderate.
  */
 function distributeMileage(
@@ -132,12 +140,14 @@ function distributeMileage(
   totalKm: number,
   maxLongKm: number,
   maxWorkoutKm: number,
-  maxEasyKm: number
+  maxEasyKm: number,
+  runsPerWeek: number
 ): { type: WorkoutType; km: number }[] {
   const easyCount = template.filter((t) => t === 'Easy').length;
+  const split = SPLIT_BY_RUNS[runsPerWeek] ?? SPLIT_BY_RUNS[4];
 
-  const longKm = Math.min(totalKm * 0.35, maxLongKm);
-  const workoutKm = Math.min(totalKm * 0.25, maxWorkoutKm);
+  const longKm = Math.min(totalKm * split.long, maxLongKm);
+  const workoutKm = Math.min(totalKm * split.workout, maxWorkoutKm);
   const remainingKm = totalKm - longKm - workoutKm;
   const easyKmEach = easyCount > 0 ? Math.min(remainingKm / easyCount, maxEasyKm) : 0;
 
@@ -195,7 +205,14 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
     if (weekTotal > feasibleMax) {
       weekTotal = feasibleMax;
     }
-    const distributed = distributeMileage(template, weekTotal, maxLongKm, maxRunKm, maxRunKm);
+    const distributed = distributeMileage(
+      template,
+      weekTotal,
+      maxLongKm,
+      maxRunKm,
+      maxRunKm,
+      inputs.runsPerWeek
+    );
 
     const days: DayPlan[] = distributed.map((d, i) => {
       const base: DayPlan = {

@@ -217,7 +217,17 @@ function App() {
                       >
                         {day.workoutType === 'Rest'
                           ? 'Rest'
-                          : `${day.workoutType} ${day.distanceKm} km`}
+                          : (
+                            <>
+                              {day.workoutType} {day.distanceKm} km
+                              {day.workoutType === 'Workout' && day.workoutNote && (
+                                <>
+                                  <br />
+                                  <span className="workout-note">{day.workoutNote}</span>
+                                </>
+                              )}
+                            </>
+                          )}
                       </td>
                     ))}
                     <td className="total-cell">{week.totalMileageKm} km</td>

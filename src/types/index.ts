@@ -18,6 +18,7 @@ export interface DayPlan {
   weekday: string; // Mon, Tue, ...
   workoutType: WorkoutType;
   distanceKm?: number; // omitted for Rest
+  workoutNote?: string; // structured description for Workout days
 }
 
 // One week of the plan (7 days Mon–Sun)

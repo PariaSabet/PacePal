@@ -419,6 +419,12 @@
   font-weight: 500;
 }
 
+.plan-table .workout-note {
+  font-size: 0.85em;
+  color: var(--color-text-subtle);
+  font-weight: 400;
+}
+
 .total-cell {
   font-weight: 700;
   color: var(--accent);

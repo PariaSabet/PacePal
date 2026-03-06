@@ -1,4 +1,4 @@
-import type { PlanInputs, WeekPlan, DayPlan, WorkoutType } from '../types';
+import type { PlanInputs, WeekPlan, DayPlan, WorkoutType, RaceDistance, ExperienceLevel } from '../types';
 import { getWeekTemplate, STARTING_MILEAGE_KM, WEEKDAY_SHORT, MAX_RUN_KM_BY_RACE } from '../types';
 
 const MAX_LONG_RUN_KM_BY_RACE = {
@@ -14,6 +14,78 @@ const CUTBACK_EVERY_N_WEEKS = 4;
 
 function roundToHalf(km: number): number {
   return Math.round(km * 2) / 2;
+}
+
+/**
+ * Returns a structured workout description for Workout days, varying by week,
+ * race distance, and experience level. Cutback weeks use strides.
+ */
+function getWorkoutNote(
+  weekNumber: number,
+  raceDistance: RaceDistance,
+  experienceLevel: ExperienceLevel,
+  isCutback: boolean
+): string {
+  if (isCutback) {
+    const strides = experienceLevel === 'Advanced' ? 8 : 6;
+    return `Strides: ${strides} × 20 sec fast`;
+  }
+
+  // Cycle index: weeks 1–3 build, week 4 is cutback (handled above)
+  const cycleIndex = ((weekNumber - 1) % CUTBACK_EVERY_N_WEEKS);
+  const phase = cycleIndex; // 0, 1, 2 for build weeks
+
+  // Workout descriptions by phase, scaled by race distance and experience
+  const workouts5K = [
+    '6 × 1 min brisk, 2 min easy',
+    '8 × 1 min brisk',
+    '10 min steady in middle',
+  ];
+  const workouts10K = [
+    '5 × 2 min brisk, 2 min easy',
+    '6 × 2 min brisk',
+    '15 min steady in middle',
+  ];
+  const workoutsHalf = [
+    '4 × 3 min tempo, 2 min easy',
+    '3 × 5 min tempo',
+    '20 min steady in middle',
+  ];
+  const workoutsMarathon = [
+    '3 × 5 min tempo, 3 min easy',
+    '2 × 8 min tempo',
+    '25 min steady in middle',
+  ];
+
+  const byRace: Record<RaceDistance, string[]> = {
+    '5K': workouts5K,
+    '10K': workouts10K,
+    Half: workoutsHalf,
+    Marathon: workoutsMarathon,
+  };
+
+  let note = byRace[raceDistance][phase];
+
+  // Scale reps by experience: Beginner fewer, Advanced more
+  if (experienceLevel === 'Beginner' && phase < 2) {
+    const scaled: Record<RaceDistance, string[]> = {
+      '5K': ['5 × 1 min brisk, 2 min easy', '6 × 1 min brisk', '10 min steady in middle'],
+      '10K': ['4 × 2 min brisk, 2 min easy', '5 × 2 min brisk', '15 min steady in middle'],
+      Half: ['3 × 3 min tempo, 2 min easy', '2 × 5 min tempo', '20 min steady in middle'],
+      Marathon: ['2 × 5 min tempo, 3 min easy', '2 × 6 min tempo', '25 min steady in middle'],
+    };
+    note = scaled[raceDistance][phase];
+  } else if (experienceLevel === 'Advanced' && phase < 2) {
+    const scaled: Record<RaceDistance, string[]> = {
+      '5K': ['8 × 1 min brisk, 90 sec easy', '10 × 1 min brisk', '12 min steady in middle'],
+      '10K': ['6 × 2 min brisk, 90 sec easy', '8 × 2 min brisk', '18 min steady in middle'],
+      Half: ['5 × 3 min tempo, 90 sec easy', '4 × 5 min tempo', '25 min steady in middle'],
+      Marathon: ['4 × 5 min tempo, 2 min easy', '3 × 8 min tempo', '30 min steady in middle'],
+    };
+    note = scaled[raceDistance][phase];
+  }
+
+  return note;
 }
 
 function weeksBetween(start: Date, end: Date): number {
@@ -82,11 +154,22 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
     }
     const distributed = distributeMileage(template, weekTotal, maxLongKm, maxRunKm, maxRunKm);
 
-    const days: DayPlan[] = distributed.map((d, i) => ({
-      weekday: WEEKDAY_SHORT[i],
-      workoutType: d.type,
-      ...(d.type !== 'Rest' && { distanceKm: d.km }),
-    }));
+    const days: DayPlan[] = distributed.map((d, i) => {
+      const base: DayPlan = {
+        weekday: WEEKDAY_SHORT[i],
+        workoutType: d.type,
+        ...(d.type !== 'Rest' && { distanceKm: d.km }),
+      };
+      if (d.type === 'Workout') {
+        base.workoutNote = getWorkoutNote(
+          w + 1,
+          inputs.raceDistance,
+          inputs.experienceLevel,
+          isCutback
+        );
+      }
+      return base;
+    });
 
     const actualTotal = distributed.reduce((sum, d) => sum + d.km, 0);
 

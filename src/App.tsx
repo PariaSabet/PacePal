@@ -5,6 +5,8 @@ import { GoalDatePicker } from './components/GoalDatePicker';
 import { FormSelect } from './components/FormSelect';
 import './App.css';
 
+type PlanView = 'cards' | 'table';
+
 const RACE_DISTANCE_OPTIONS = [
   { value: '5K', label: '5K' },
   { value: '10K', label: '10K' },
@@ -54,6 +56,7 @@ function App() {
   const [plan, setPlan] = useState<WeekPlan[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [dateError, setDateError] = useState<string | null>(null);
+  const [planView, setPlanView] = useState<PlanView>('cards');
 
   const handleInputChange = useCallback(
     (field: keyof PlanInputs, value: string | number) => {
@@ -177,7 +180,40 @@ function App() {
       {!loading && plan && plan.length > 0 && (
         <section className="plan-section" aria-label="Training plan">
           <div className="plan-summary">
-            <h2>Plan summary</h2>
+            <div className="plan-summary-top">
+              <h2>Plan summary</h2>
+              <div className="view-toggle" role="radiogroup" aria-label="Plan view">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={planView === 'cards'}
+                  className={`view-toggle-btn${planView === 'cards' ? ' active' : ''}`}
+                  onClick={() => setPlanView('cards')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                    <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                    <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                    <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                  Cards
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={planView === 'table'}
+                  className={`view-toggle-btn${planView === 'table' ? ' active' : ''}`}
+                  onClick={() => setPlanView('table')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                    <line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    <line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  Table
+                </button>
+              </div>
+            </div>
             <ul>
               <li>Total weeks: {plan.length}</li>
               <li>Runs per week: {inputs.runsPerWeek}</li>
@@ -189,53 +225,97 @@ function App() {
             </button>
           </div>
 
-          <div className="plan-table-wrap">
-            <table className="plan-table">
-              <thead>
-                <tr>
-                  <th>Week</th>
-                  <th>Mon</th>
-                  <th>Tue</th>
-                  <th>Wed</th>
-                  <th>Thu</th>
-                  <th>Fri</th>
-                  <th>Sat</th>
-                  <th>Sun</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {plan.map((week) => (
-                  <tr key={week.weekNumber}>
-                    <td className="week-cell">{week.weekNumber}</td>
+          {planView === 'cards' ? (
+            <div className="plan-cards">
+              {plan.map((week) => (
+                <div className="week-card" key={week.weekNumber}>
+                  <div className="week-card-header">
+                    <div className="week-card-title">
+                      <span className="week-card-number">Week {week.weekNumber}</span>
+                      <span className={`week-phase week-phase--${week.phase.toLowerCase()}`}>
+                        {week.phase}
+                      </span>
+                    </div>
+                    <span className="week-card-total">{week.totalMileageKm} km</span>
+                  </div>
+                  <div className="week-days-grid">
                     {week.days.map((day) => (
-                      <td
+                      <div
+                        className={`day-chip day-chip--${day.workoutType.toLowerCase()}`}
                         key={day.weekday}
-                        className={
-                          day.workoutType === 'Rest' ? 'rest-cell' : 'workout-cell'
-                        }
                       >
-                        {day.workoutType === 'Rest'
-                          ? 'Rest'
-                          : (
-                            <>
-                              {day.workoutType} {day.distanceKm} km
-                              {day.workoutType === 'Workout' && day.workoutNote && (
-                                <>
-                                  <br />
-                                  <span className="workout-note">{day.workoutNote}</span>
-                                </>
-                              )}
-                            </>
-                          )}
-                      </td>
+                        <span className="day-chip-label">{day.weekday}</span>
+                        {day.workoutType === 'Rest' ? (
+                          <span className="day-chip-type">Rest</span>
+                        ) : (
+                          <>
+                            <span className="day-chip-type">{day.workoutType}</span>
+                            <span className="day-chip-distance">{day.distanceKm} km</span>
+                            {day.workoutNote && (
+                              <span className="day-chip-note">{day.workoutNote}</span>
+                            )}
+                          </>
+                        )}
+                      </div>
                     ))}
-                    <td className="total-cell">{week.totalMileageKm} km</td>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="plan-table-wrap">
+              <table className="plan-table">
+                <thead>
+                  <tr>
+                    <th>Week</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
+                    <th>Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {plan.map((week) => (
+                    <tr key={week.weekNumber}>
+                      <td className="week-cell">
+                        {week.weekNumber}
+                        <span className={`week-phase week-phase--${week.phase.toLowerCase()}`}>
+                          {week.phase}
+                        </span>
+                      </td>
+                      {week.days.map((day) => (
+                        <td
+                          key={day.weekday}
+                          className={
+                            day.workoutType === 'Rest' ? 'rest-cell' : 'workout-cell'
+                          }
+                        >
+                          {day.workoutType === 'Rest'
+                            ? 'Rest'
+                            : (
+                              <>
+                                {day.workoutType} {day.distanceKm} km
+                                {day.workoutType === 'Workout' && day.workoutNote && (
+                                  <>
+                                    <br />
+                                    <span className="workout-note">{day.workoutNote}</span>
+                                  </>
+                                )}
+                              </>
+                            )}
+                        </td>
+                      ))}
+                      <td className="total-cell">{week.totalMileageKm} km</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
       )}
     </div>

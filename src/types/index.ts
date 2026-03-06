@@ -3,6 +3,7 @@ export type RaceDistance = '5K' | '10K' | 'Half' | 'Marathon';
 export type ExperienceLevel = 'Beginner' | 'Intermediate' | 'Advanced';
 export type WorkoutType = 'Easy' | 'Workout' | 'Long' | 'Rest';
 export type LongRunDay = 'Saturday' | 'Sunday';
+export type WeekPhase = 'Build' | 'Recovery' | 'Taper' | 'Race';
 
 // Plan input from the form
 export interface PlanInputs {
@@ -24,6 +25,7 @@ export interface DayPlan {
 // One week of the plan (7 days Mon–Sun)
 export interface WeekPlan {
   weekNumber: number;
+  phase: WeekPhase;
   days: DayPlan[];
   totalMileageKm: number;
 }

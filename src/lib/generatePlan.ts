@@ -1,4 +1,4 @@
-import type { PlanInputs, WeekPlan, DayPlan, WorkoutType, RaceDistance, ExperienceLevel } from '../types';
+import type { PlanInputs, WeekPlan, DayPlan, WorkoutType, WeekPhase, RaceDistance, ExperienceLevel } from '../types';
 import { getWeekTemplate, STARTING_MILEAGE_KM, WEEKDAY_SHORT, MAX_RUN_KM_BY_RACE } from '../types';
 
 const MAX_LONG_RUN_KM_BY_RACE = {
@@ -233,8 +233,14 @@ export function generatePlan(inputs: PlanInputs): WeekPlan[] {
 
     const actualTotal = distributed.reduce((sum, d) => sum + d.km, 0);
 
+    let phase: WeekPhase = 'Build';
+    if (w === numWeeks - 1) phase = 'Race';
+    else if (numWeeks >= 6 && w === numWeeks - 2) phase = 'Taper';
+    else if (isCutback) phase = 'Recovery';
+
     plans.push({
       weekNumber: w + 1,
+      phase,
       days,
       totalMileageKm: roundToHalf(actualTotal),
     });

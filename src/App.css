@@ -45,6 +45,8 @@
 
 /* ===== Form Card ===== */
 .form {
+  position: relative;
+  z-index: 10;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.25rem 1.5rem;
@@ -301,6 +303,8 @@
 
 /* ===== Plan Section ===== */
 .plan-section {
+  position: relative;
+  z-index: 1;
   margin-top: 2.5rem;
   animation: fadeInUp 0.5s ease-out;
 }
